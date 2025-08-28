@@ -9,6 +9,9 @@ export default defineNuxtConfig({
     }
   },
   // Configuración de middleware global
+  router: {
+    middleware: ['auth']
+  },
   routeRules: {
     '/my-library': { middleware: ['auth'] },
     '/book/**': { middleware: ['auth'] }

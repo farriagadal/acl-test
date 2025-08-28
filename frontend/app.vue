@@ -23,6 +23,11 @@ const authStore = useAuthStore()
 onMounted(() => {
   // Inicializar autenticación
   authStore.initAuth()
+  
+  // Verificar autenticación y redirigir si es necesario
+  if (process.client && !authStore.isLoggedIn && window.location.pathname !== '/login') {
+    navigateTo('/login')
+  }
 })
 </script>
 
