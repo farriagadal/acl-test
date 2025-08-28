@@ -1,15 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- Header -->
-    <header class="header">
-      <div class="header-content">
-        <AppTitle />
-        <button class="my-library-btn" @click="goToHome">
-          Volver al Inicio
-        </button>
-      </div>
-    </header>
-
     <!-- Contenido principal -->
     <main class="main-content">
       <div class="my-library">

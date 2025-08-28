@@ -1,15 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- Header -->
-    <header class="header">
-      <div class="header-content">
-        <AppTitle />
-        <button class="my-library-btn" @click="goToMyLibrary">
-          Mi Biblioteca
-        </button>
-      </div>
-    </header>
-
     <!-- Contenido principal -->
     <main class="main-content">
       <!-- Sección de búsqueda -->
@@ -151,9 +141,7 @@ const selectBook = (book) => {
   navigateTo(`/book/${encodeURIComponent(book.title)}`)
 }
 
-const goToMyLibrary = () => {
-  navigateTo('/my-library')
-}
+
 
 // Lifecycle
 onMounted(async () => {

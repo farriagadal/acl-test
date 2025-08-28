@@ -1,15 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- Header -->
-    <header class="header">
-      <div class="header-content">
-        <AppTitle />
-        <button class="my-library-btn" @click="goToMyLibrary">
-          Mi Biblioteca
-        </button>
-      </div>
-    </header>
-
     <!-- Contenido principal -->
     <main class="main-content">
       <div class="book-detail">
@@ -238,9 +228,7 @@ const convertImageToBase64 = (imageUrl) => {
   })
 }
 
-const goToMyLibrary = () => {
-  navigateTo('/my-library')
-}
+
 
 // Lifecycle ya no es necesario separarlo, se ha incluido en la inicialización de bookData
 </script>

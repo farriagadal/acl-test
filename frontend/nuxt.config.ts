@@ -8,6 +8,11 @@ export default defineNuxtConfig({
       apiBase: process.env.API_BASE || 'http://localhost:3001'
     }
   },
+  // Configuración de middleware global
+  routeRules: {
+    '/my-library': { middleware: ['auth'] },
+    '/book/**': { middleware: ['auth'] }
+  },
   app: {
     head: {
       title: 'ACL Test - Biblioteca de Libros',
