@@ -3,9 +3,7 @@
     <!-- Header -->
     <header class="header">
       <div class="header-content">
-        <div class="logo">
-          <h1>📚 Biblioteca ACL Test</h1>
-        </div>
+        <AppTitle />
         <button class="my-library-btn" @click="goToMyLibrary">
           Mi Biblioteca
         </button>
@@ -28,13 +26,15 @@
             required
           />
           <button 
-            type="submit" 
+            type="button" 
             class="search-btn"
             :disabled="loading"
+            @click="searchBooks()"
           >
             {{ loading ? 'Buscando...' : 'Buscar' }}
           </button>
         </form>
+
       </section>
 
       <!-- Búsquedas recientes -->
@@ -95,6 +95,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useBooksStore } from '~/stores/books'
+import AppTitle from '~/components/AppTitle.vue'
 
 // Store
 const booksStore = useBooksStore()
@@ -112,26 +113,42 @@ const hasRecentSearches = computed(() => booksStore.hasRecentSearches)
 
 // Métodos
 const searchBooks = async (query = null) => {
-  const searchTerm = query || searchQuery.value
-  if (!searchTerm.trim()) return
+  console.log('🔍 Función searchBooks llamada con query:', query)
+  console.log('🔍 Valor actual de searchQuery.value:', searchQuery.value)
   
-  await booksStore.searchBooks(searchTerm)
+  // Si no se pasa query, usar el valor del input
+  const searchTerm = query || searchQuery.value
+  
+  console.log('🔍 searchTerm final:', searchTerm, 'tipo:', typeof searchTerm)
+  
+  // Validar que searchTerm sea una cadena válida
+  if (!searchTerm || typeof searchTerm !== 'string' || !searchTerm.trim()) {
+    console.warn('Término de búsqueda inválido:', searchTerm, 'tipo:', typeof searchTerm)
+    return
+  }
+  
+  console.log('🔍 Buscando libros con término:', searchTerm)
+  try {
+    console.log('🔍 Llamando a booksStore.searchBooks con término:', searchTerm)
+    await booksStore.searchBooks(searchTerm)
+    console.log('✅ Búsqueda completada')
+  } catch (error) {
+    console.error('❌ Error en searchBooks:', error)
+  }
+  
+  // Solo limpiar el input si no se pasó un query externo
   if (!query) {
     searchQuery.value = ''
   }
 }
 
+
 const selectBook = (book) => {
+  // Guardar el libro seleccionado en el store
+  booksStore.currentBook = book
+  
   // Navegar a la página de detalle del libro
-  navigateTo(`/book/${encodeURIComponent(book.title)}`, {
-    query: {
-      openLibraryId: book.openLibraryId,
-      coverId: book.coverId,
-      author: book.author,
-      publicationYear: book.publicationYear,
-      coverImage: book.coverImage
-    }
-  })
+  navigateTo(`/book/${encodeURIComponent(book.title)}`)
 }
 
 const goToMyLibrary = () => {
@@ -140,6 +157,12 @@ const goToMyLibrary = () => {
 
 // Lifecycle
 onMounted(async () => {
-  await booksStore.loadRecentSearches()
+  try {
+    console.log('🔄 Cargando búsquedas recientes...')
+    await booksStore.loadRecentSearches()
+    console.log('✅ Búsquedas recientes cargadas:', booksStore.recentSearches)
+  } catch (error) {
+    console.error('❌ Error en onMounted:', error)
+  }
 })
 </script>

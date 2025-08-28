@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useApi } from '~/composables/useApi'
 
 export const useBooksStore = defineStore('books', {
   state: () => ({
@@ -19,19 +20,29 @@ export const useBooksStore = defineStore('books', {
   actions: {
     // Buscar libros
     async searchBooks(query) {
+      // Validar que query sea una cadena válida
+      if (!query || typeof query !== 'string' || !query.trim()) {
+        console.warn('Query inválido en searchBooks:', query)
+        this.error = 'Término de búsqueda inválido'
+        return
+      }
+
       this.loading = true
       this.error = null
       
       try {
-        const { $fetch } = useNuxtApp()
-        const config = useRuntimeConfig()
-        
-        const response = await $fetch(`${config.public.apiBase}/api/books/search?q=${encodeURIComponent(query)}`)
+        const api = useApi()
+        console.log('🔍 Iniciando búsqueda con query:', query)
+        console.log('🔍 URL a consultar:', `/api/books/search?q=${encodeURIComponent(query)}`)
+        const response = await api.get(`/api/books/search?q=${encodeURIComponent(query)}`)
+        console.log('🔍 Respuesta recibida:', response)
         
         if (response.message) {
+          console.log('❗ Mensaje de error recibido:', response.message)
           this.searchResults = []
           this.error = response.message
         } else {
+          console.log('✅ Libros encontrados:', response.books ? response.books.length : 0)
           this.searchResults = response.books || []
           this.error = null
         }
@@ -51,10 +62,8 @@ export const useBooksStore = defineStore('books', {
     // Cargar búsquedas recientes
     async loadRecentSearches() {
       try {
-        const { $fetch } = useNuxtApp()
-        const config = useRuntimeConfig()
-        
-        const searches = await $fetch(`${config.public.apiBase}/api/books/last-search`)
+        const api = useApi()
+        const searches = await api.get('/api/books/last-search')
         this.recentSearches = searches || []
       } catch (error) {
         console.error('Error cargando búsquedas recientes:', error)
@@ -66,8 +75,7 @@ export const useBooksStore = defineStore('books', {
       this.loading = true
       
       try {
-        const { $fetch } = useNuxtApp()
-        const config = useRuntimeConfig()
+        const api = useApi()
         
         const queryParams = new URLSearchParams()
         if (filters.search) queryParams.append('search', filters.search)
@@ -75,7 +83,7 @@ export const useBooksStore = defineStore('books', {
         if (filters.excludeNoReview) queryParams.append('excludeNoReview', filters.excludeNoReview)
         if (filters.sortBy) queryParams.append('sortBy', filters.sortBy)
         
-        const books = await $fetch(`${config.public.apiBase}/api/books/my-library?${queryParams}`)
+        const books = await api.get(`/api/books/my-library?${queryParams}`)
         this.myLibrary = books || []
         
       } catch (error) {
@@ -89,13 +97,9 @@ export const useBooksStore = defineStore('books', {
     // Guardar libro en mi biblioteca
     async saveBook(bookData) {
       try {
-        const { $fetch } = useNuxtApp()
-        const config = useRuntimeConfig()
+        const api = useApi()
         
-        const savedBook = await $fetch(`${config.public.apiBase}/api/books/my-library`, {
-          method: 'POST',
-          body: bookData
-        })
+        const savedBook = await api.post('/api/books/my-library', bookData)
         
         // Agregar a la biblioteca local
         this.myLibrary.unshift(savedBook)
@@ -111,13 +115,9 @@ export const useBooksStore = defineStore('books', {
     // Actualizar libro
     async updateBook(bookId, updateData) {
       try {
-        const { $fetch } = useNuxtApp()
-        const config = useRuntimeConfig()
+        const api = useApi()
         
-        const updatedBook = await $fetch(`${config.public.apiBase}/api/books/my-library/${bookId}`, {
-          method: 'PUT',
-          body: updateData
-        })
+        const updatedBook = await api.put(`/api/books/my-library/${bookId}`, updateData)
         
         // Actualizar en la biblioteca local
         const index = this.myLibrary.findIndex(book => book._id === bookId)
@@ -136,12 +136,9 @@ export const useBooksStore = defineStore('books', {
     // Eliminar libro
     async deleteBook(bookId) {
       try {
-        const { $fetch } = useNuxtApp()
-        const config = useRuntimeConfig()
+        const api = useApi()
         
-        await $fetch(`${config.public.apiBase}/api/books/my-library/${bookId}`, {
-          method: 'DELETE'
-        })
+        await api.del(`/api/books/my-library/${bookId}`)
         
         // Remover de la biblioteca local
         this.myLibrary = this.myLibrary.filter(book => book._id !== bookId)
@@ -157,10 +154,9 @@ export const useBooksStore = defineStore('books', {
     // Obtener libro por ID
     async getBookById(bookId) {
       try {
-        const { $fetch } = useNuxtApp()
-        const config = useRuntimeConfig()
+        const api = useApi()
         
-        const book = await $fetch(`${config.public.apiBase}/api/books/my-library/${bookId}`)
+        const book = await api.get(`/api/books/my-library/${bookId}`)
         this.currentBook = book
         return book
         

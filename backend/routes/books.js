@@ -74,8 +74,30 @@ router.get('/my-library/:id', async (req, res) => {
 router.post('/my-library', async (req, res) => {
   try {
     console.log('📚 POST /api/books/my-library - Guardando libro en mi biblioteca');
+    console.log('📋 Datos recibidos:', req.body);
     
     const { title, author, publicationYear, coverImage, review, rating, openLibraryId, coverId } = req.body;
+    
+    // Validar campos requeridos
+    if (!title || !author || !openLibraryId) {
+      console.log('❌ Campos requeridos faltantes:', { title, author, openLibraryId });
+      return res.status(400).json({ error: 'Título, autor y ID del libro son requeridos' });
+    }
+    
+    if (!publicationYear || isNaN(publicationYear)) {
+      console.log('❌ Año de publicación inválido:', publicationYear);
+      return res.status(400).json({ error: 'Año de publicación debe ser un número válido' });
+    }
+    
+    if (!coverImage) {
+      console.log('❌ Imagen de portada faltante');
+      return res.status(400).json({ error: 'Imagen de portada es requerida' });
+    }
+    
+    if (!rating || rating < 1 || rating > 5) {
+      console.log('❌ Calificación inválida:', rating);
+      return res.status(400).json({ error: 'Calificación debe ser entre 1 y 5' });
+    }
     
     // Verificar si el libro ya existe
     const existingBook = await Book.findOne({ openLibraryId });
@@ -87,13 +109,15 @@ router.post('/my-library', async (req, res) => {
     const book = new Book({
       title,
       author,
-      publicationYear,
+      publicationYear: parseInt(publicationYear),
       coverImage,
       review,
-      rating,
+      rating: parseInt(rating),
       openLibraryId,
       coverId
     });
+    
+    console.log('📖 Libro a guardar:', book);
     
     await book.save();
     

@@ -3,9 +3,7 @@
     <!-- Header -->
     <header class="header">
       <div class="header-content">
-        <div class="logo">
-          <h1>📚 Biblioteca ACL Test</h1>
-        </div>
+        <AppTitle />
         <button class="my-library-btn" @click="goToMyLibrary">
           Mi Biblioteca
         </button>
@@ -84,6 +82,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useBooksStore } from '~/stores/books'
+import AppTitle from '~/components/AppTitle.vue'
 
 // Store
 const booksStore = useBooksStore()
@@ -97,14 +96,36 @@ const review = ref('')
 const saving = ref(false)
 const showSuccessMessage = ref(false)
 
-// Datos del libro desde la URL
+// Datos del libro desde el Store
 const bookData = ref({
-  title: decodeURIComponent(route.params.title),
-  author: route.query.author || 'Autor desconocido',
-  publicationYear: route.query.publicationYear || 'Año desconocido',
-  coverImage: route.query.coverImage || null,
-  openLibraryId: route.query.openLibraryId || '',
-  coverId: route.query.coverId || ''
+  title: '',
+  author: 'Autor desconocido',
+  publicationYear: 'Año desconocido',
+  coverImage: null,
+  openLibraryId: '',
+  coverId: ''
+})
+
+// Cargar datos del libro desde el store
+onMounted(() => {
+  // Cargar búsquedas recientes
+  booksStore.loadRecentSearches()
+  
+  if (booksStore.currentBook) {
+    bookData.value = { ...booksStore.currentBook }
+    console.log('Datos del libro cargados desde store:', bookData.value)
+  } else {
+    // Fallback: intentar obtener datos de la URL si no hay libro en el store
+    bookData.value = {
+      title: decodeURIComponent(route.params.title),
+      author: route.query.author || 'Autor desconocido',
+      publicationYear: route.query.publicationYear || 'Año desconocido',
+      coverImage: route.query.coverImage || null,
+      openLibraryId: route.query.openLibraryId || '',
+      coverId: route.query.coverId || ''
+    }
+    console.log('Datos del libro cargados desde URL:', bookData.value)
+  }
 })
 
 // Métodos
@@ -114,25 +135,56 @@ const saveBook = async () => {
     return
   }
 
+  // Validar que tengamos los datos mínimos requeridos
+  if (!bookData.value.openLibraryId || bookData.value.openLibraryId.trim() === '') {
+    alert('Error: ID del libro no disponible')
+    return
+  }
+
   saving.value = true
 
   try {
     // Convertir imagen a base64 si existe
     let coverImageBase64 = null
-    if (bookData.value.coverImage) {
-      coverImageBase64 = await convertImageToBase64(bookData.value.coverImage)
+    if (bookData.value.coverImage && bookData.value.coverImage !== 'null') {
+      try {
+        coverImageBase64 = await convertImageToBase64(bookData.value.coverImage)
+      } catch (error) {
+        console.warn('No se pudo convertir la imagen a base64:', error)
+        // Usar una imagen por defecto
+        coverImageBase64 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlbjwvdGV4dD48L3N2Zz4='
+      }
+    } else {
+      // Imagen por defecto si no hay portada
+      coverImageBase64 = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlbjwvdGV4dD48L3N2Zz4='
+    }
+
+    // Procesar año de publicación
+    let publicationYear = null
+    if (bookData.value.publicationYear && bookData.value.publicationYear !== 'Año desconocido') {
+      const year = parseInt(bookData.value.publicationYear)
+      if (!isNaN(year) && year > 0) {
+        publicationYear = year
+      }
+    }
+    
+    // Si no hay año válido, usar el año actual
+    if (!publicationYear) {
+      publicationYear = new Date().getFullYear()
     }
 
     const bookDataToSave = {
       title: bookData.value.title,
       author: bookData.value.author,
-      publicationYear: bookData.value.publicationYear,
+      publicationYear: publicationYear,
       coverImage: coverImageBase64,
       review: review.value,
       rating: rating.value,
-      openLibraryId: bookData.value.openLibraryId,
-      coverId: bookData.value.coverId
+      openLibraryId: bookData.value.openLibraryId.trim(),
+      coverId: bookData.value.coverId || ''
     }
+
+    console.log('📚 Datos a guardar:', bookDataToSave)
 
     const result = await booksStore.saveBook(bookDataToSave)
 
@@ -190,9 +242,5 @@ const goToMyLibrary = () => {
   navigateTo('/my-library')
 }
 
-// Lifecycle
-onMounted(() => {
-  // Cargar búsquedas recientes
-  booksStore.loadRecentSearches()
-})
+// Lifecycle ya no es necesario separarlo, se ha incluido en la inicialización de bookData
 </script>

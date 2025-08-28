@@ -3,9 +3,7 @@
     <!-- Header -->
     <header class="header">
       <div class="header-content">
-        <div class="logo">
-          <h1>📚 Biblioteca ACL Test</h1>
-        </div>
+        <AppTitle />
         <button class="my-library-btn" @click="goToHome">
           Volver al Inicio
         </button>
@@ -206,6 +204,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useBooksStore } from '~/stores/books'
+import AppTitle from '~/components/AppTitle.vue'
 
 // Store
 const booksStore = useBooksStore()
