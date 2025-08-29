@@ -39,18 +39,25 @@ router.get('/search', async (req, res) => {
     const processedBooks = await Promise.all(
       books.map(async (book) => {
         const coverId = book.cover_i;
-        const coverUrl = coverId 
-          ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
-          : null;
         
         // Verificar si el libro está en mi biblioteca
         const savedBook = await Book.findOne({ openLibraryId: book.key });
+        
+        // Si el libro ya está en la biblioteca, usar la URL local para la portada
+        let coverImage;
+        if (savedBook) {
+          coverImage = `/api/books/library/front-cover/${savedBook._id}`;
+        } else {
+          coverImage = coverId 
+            ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
+            : null;
+        }
         
         return {
           title: book.title,
           author: book.author_name ? book.author_name[0] : 'Autor desconocido',
           publicationYear: book.first_publish_year || 'Año desconocido',
-          coverImage: coverUrl,
+          coverImage: coverImage,
           openLibraryId: book.key,
           coverId: coverId,
           isInLibrary: !!savedBook,
