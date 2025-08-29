@@ -196,7 +196,15 @@ router.get('/library/front-cover/:id', async (req, res) => {
     }
     
     console.log(`✅ Portada de "${book.title}" obtenida exitosamente`);
-    res.json({ coverImage: book.coverImage });
+    
+    // La imagen ya se guarda como un data URL completo, así que la devolvemos directamente
+    // Si por alguna razón no es un data URL, verificamos y lo convertimos
+    if (book.coverImage.startsWith('data:image')) {
+      res.json({ image: book.coverImage });
+    } else {
+      // Asumimos que es base64 y necesitamos añadir el prefijo
+      res.json({ image: `data:image/jpeg;base64,${book.coverImage}` });
+    }
     
   } catch (error) {
     console.error('❌ Error obteniendo portada:', error);

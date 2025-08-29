@@ -52,15 +52,11 @@
             class="book-card"
             @click="selectBook(book)"
           >
-            <img
-              v-if="book.coverImage"
-              :src="book.coverImage"
+            <BookCover 
+              :src="book.coverImage" 
               :alt="book.title"
-              class="book-cover"
+              css-class="book-cover"
             />
-            <div v-else class="book-cover">
-              Sin portada disponible
-            </div>
             <div class="book-info">
               <h4 class="book-title">{{ book.title }}</h4>
               <p class="book-author">{{ book.author }}</p>
@@ -86,6 +82,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useBooksStore } from '~/stores/books'
 import AppTitle from '~/components/AppTitle.vue'
+import BookCover from '~/components/BookCover.vue'
 
 // Store
 const booksStore = useBooksStore()

@@ -5,15 +5,11 @@
       <div class="book-detail">
         <!-- Header del libro -->
         <div class="book-header">
-          <img
-            v-if="bookData.coverImage"
+          <BookCover
             :src="bookData.coverImage"
             :alt="bookData.title"
-            class="book-cover-large"
+            css-class="book-cover-large"
           />
-          <div v-else class="book-cover-large">
-            Sin portada disponible
-          </div>
           
           <div class="book-info-large">
             <h1 class="book-title-large">{{ bookData.title }}</h1>
@@ -73,6 +69,7 @@
 import { ref, onMounted } from 'vue'
 import { useBooksStore } from '~/stores/books'
 import AppTitle from '~/components/AppTitle.vue'
+import BookCover from '~/components/BookCover.vue'
 
 // Store
 const booksStore = useBooksStore()

@@ -74,15 +74,11 @@
               :key="book._id"
               class="library-book-card"
             >
-              <img
-                v-if="book.coverImage"
+              <BookCover
                 :src="book.coverImage"
                 :alt="book.title"
-                class="book-cover"
+                css-class="book-cover"
               />
-              <div v-else class="book-cover">
-                Sin portada disponible
-              </div>
               
               <div class="book-content">
                 <h3 class="book-title">{{ book.title }}</h3>
@@ -194,6 +190,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useBooksStore } from '~/stores/books'
+import BookCover from '~/components/BookCover.vue'
 import AppTitle from '~/components/AppTitle.vue'
 
 // Store
