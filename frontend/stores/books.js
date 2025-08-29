@@ -8,7 +8,16 @@ export const useBooksStore = defineStore('books', {
     recentSearches: [],
     currentBook: null,
     loading: false,
-    error: null
+    error: null,
+    pagination: {
+      page: 1,
+      limit: 6,
+      hasNextPage: false,
+      hasPrevPage: false,
+      totalResults: 0,
+      totalPages: 0
+    },
+    currentSearchQuery: ''
   }),
 
   getters: {
@@ -19,7 +28,7 @@ export const useBooksStore = defineStore('books', {
 
   actions: {
     // Buscar libros
-    async searchBooks(query) {
+    async searchBooks(query, page = 1, resetResults = true) {
       // Validar que query sea una cadena válida
       if (!query || typeof query !== 'string' || !query.trim()) {
         console.warn('Query inválido en searchBooks:', query)
@@ -30,11 +39,20 @@ export const useBooksStore = defineStore('books', {
       this.loading = true
       this.error = null
       
+      // Si es una nueva búsqueda, resetear resultados
+      if (resetResults || query !== this.currentSearchQuery) {
+        this.searchResults = []
+        this.pagination.page = 1
+        this.currentSearchQuery = query
+      }
+      
       try {
         const api = useApi()
-        console.log('🔍 Iniciando búsqueda con query:', query)
-        console.log('🔍 URL a consultar:', `/api/books/search?q=${encodeURIComponent(query)}`)
-        const response = await api.get(`/api/books/search?q=${encodeURIComponent(query)}`)
+        console.log(`🔍 Iniciando búsqueda con query: ${query}, página: ${page}`)
+        const url = `/api/books/search?q=${encodeURIComponent(query)}&page=${page}&limit=${this.pagination.limit}`
+        console.log('🔍 URL a consultar:', url)
+        
+        const response = await api.get(url)
         console.log('🔍 Respuesta recibida:', response)
         
         if (response.message) {
@@ -43,7 +61,17 @@ export const useBooksStore = defineStore('books', {
           this.error = response.message
         } else {
           console.log('✅ Libros encontrados:', response.books ? response.books.length : 0)
+          
+          // Actualizar resultados
           this.searchResults = response.books || []
+          
+          // Actualizar información de paginación
+          if (response.pagination) {
+            this.pagination = {
+              ...response.pagination
+            }
+          }
+          
           this.error = null
         }
         
@@ -56,6 +84,22 @@ export const useBooksStore = defineStore('books', {
         this.searchResults = []
       } finally {
         this.loading = false
+      }
+    },
+    
+    // Cargar siguiente página
+    async loadNextPage() {
+      if (this.pagination.hasNextPage && this.currentSearchQuery) {
+        const nextPage = this.pagination.page + 1
+        await this.searchBooks(this.currentSearchQuery, nextPage)
+      }
+    },
+    
+    // Cargar página anterior
+    async loadPrevPage() {
+      if (this.pagination.hasPrevPage && this.currentSearchQuery) {
+        const prevPage = this.pagination.page - 1
+        await this.searchBooks(this.currentSearchQuery, prevPage)
       }
     },
 

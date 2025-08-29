@@ -63,6 +63,15 @@
             </div>
           </div>
         </div>
+        
+        <!-- Paginación -->
+        <Pagination 
+          v-if="pagination.totalPages > 1"
+          :pagination="pagination"
+          :loading="loading"
+          @prev-page="handlePrevPage"
+          @next-page="handleNextPage"
+        />
       </section>
 
       <!-- Mensaje de error -->
@@ -83,6 +92,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useBooksStore } from '~/stores/books'
 import AppTitle from '~/components/AppTitle.vue'
 import BookCover from '~/components/BookCover.vue'
+import Pagination from '~/components/Pagination.vue'
 
 // Store
 const booksStore = useBooksStore()
@@ -97,6 +107,7 @@ const loading = computed(() => booksStore.loading)
 const error = computed(() => booksStore.error)
 const hasSearchResults = computed(() => booksStore.hasSearchResults)
 const hasRecentSearches = computed(() => booksStore.hasRecentSearches)
+const pagination = computed(() => booksStore.pagination)
 
 // Métodos
 const searchBooks = async (query = null) => {
@@ -136,6 +147,23 @@ const selectBook = (book) => {
   
   // Navegar a la página de detalle del libro
   navigateTo(`/book/${encodeURIComponent(book.title)}`)
+}
+
+const handlePrevPage = async () => {
+  await booksStore.loadPrevPage()
+  scrollToTop()
+}
+
+const handleNextPage = async () => {
+  await booksStore.loadNextPage()
+  scrollToTop()
+}
+
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
 }
 
 

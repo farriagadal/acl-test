@@ -103,7 +103,7 @@ onMounted(() => {
 <style scoped>
 .book-cover-container {
   width: 100%;
-  height: 100%;
+  height: initial;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -7,24 +7,32 @@ const Search = require('../models/Search');
 // GET /api/books/search?q=:nombreDelLibro - Buscar libros en OpenLibrary
 router.get('/search', async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, page = 1, limit = 6 } = req.query;
     
     if (!q) {
       console.log('❌ Parámetro de búsqueda no proporcionado');
       return res.status(400).json({ error: 'Parámetro de búsqueda requerido' });
     }
     
-    console.log(`🔍 GET /api/books/search?q=${q} - Buscando libros en OpenLibrary`);
+    // Convertir parámetros a números
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const offset = (pageNum - 1) * limitNum;
     
-    // Guardar búsqueda en historial
-    const search = new Search({ query: q });
-    await search.save();
+    console.log(`🔍 GET /api/books/search?q=${q}&page=${pageNum}&limit=${limitNum} - Buscando libros en OpenLibrary`);
     
-    // Buscar en OpenLibrary
+    // Guardar búsqueda en historial (solo en la primera página)
+    if (pageNum === 1) {
+      const search = new Search({ query: q });
+      await search.save();
+    }
+    
+    // Buscar en OpenLibrary - pedimos más resultados para poder saber si hay más páginas
     const response = await axios.get(`${process.env.OPENLIBRARY_API}/search.json`, {
       params: {
         q: q,
-        limit: 10
+        limit: limitNum + 1, // Pedimos uno más para verificar si hay más páginas
+        offset: offset
       }
     });
     
@@ -36,8 +44,14 @@ router.get('/search', async (req, res) => {
     }
     
     // Procesar resultados y verificar si están en mi biblioteca
+    // Verificamos si hay más páginas
+    const hasMorePages = books.length > limitNum;
+    
+    // Si hay más páginas, removemos el elemento extra que pedimos
+    const booksToProcess = hasMorePages ? books.slice(0, limitNum) : books;
+    
     const processedBooks = await Promise.all(
-      books.map(async (book) => {
+      booksToProcess.map(async (book) => {
         const coverId = book.cover_i;
         
         // Verificar si el libro está en mi biblioteca
@@ -67,8 +81,21 @@ router.get('/search', async (req, res) => {
       })
     );
     
-    console.log(`✅ Encontrados ${processedBooks.length} libros para "${q}"`);
-    res.json({ books: processedBooks });
+    // Información de paginación
+    const pagination = {
+      page: pageNum,
+      limit: limitNum,
+      hasNextPage: hasMorePages,
+      hasPrevPage: pageNum > 1,
+      totalResults: response.data.numFound || 0,
+      totalPages: Math.ceil((response.data.numFound || 0) / limitNum)
+    };
+    
+    console.log(`✅ Encontrados ${processedBooks.length} libros para "${q}" (página ${pageNum}/${pagination.totalPages})`);
+    res.json({ 
+      books: processedBooks,
+      pagination
+    });
     
   } catch (error) {
     console.error('❌ Error buscando libros:', error);
