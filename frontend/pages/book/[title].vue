@@ -55,7 +55,7 @@
           </div>
 
           <!-- Botón guardar -->
-          <button type="submit" class="save-btn" :disabled="!rating || saving">
+          <button type="submit" class="save-btn" :disabled="!rating || !review || saving">
             {{ saving ? 'Guardando...' : 'Guardar en Mi Biblioteca' }}
           </button>
         </form>
@@ -232,3 +232,16 @@ const convertImageToBase64 = (imageUrl) => {
 
 // Lifecycle ya no es necesario separarlo, se ha incluido en la inicialización de bookData
 </script>
+
+<style scoped>
+.save-btn {
+  cursor: pointer;
+  /* otros estilos que ya tenga el botón */
+}
+
+.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+</style>
