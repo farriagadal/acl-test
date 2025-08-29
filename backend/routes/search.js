@@ -43,10 +43,11 @@ router.get('/search', async (req, res) => {
         // Verificar si el libro está en mi biblioteca
         const savedBook = await Book.findOne({ openLibraryId: book.key });
         
-        // Si el libro ya está en la biblioteca, usar la URL local para la portada
+        // Si el libro ya está en la biblioteca, usar la portada guardada directamente
         let coverImage;
-        if (savedBook) {
-          coverImage = `/api/books/library/front-cover/${savedBook._id}`;
+        if (savedBook && savedBook.coverImage) {
+          // Usar directamente la imagen en base64 almacenada
+          coverImage = savedBook.coverImage;
         } else {
           coverImage = coverId 
             ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
